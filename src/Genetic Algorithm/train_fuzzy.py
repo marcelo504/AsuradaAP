@@ -52,7 +52,7 @@ def reaction(vessel,axis,manu):
             vessel.control.right = 0
     
 
-def startFuzzy():
+def startFuzzy(member_path):
     #Variaveis
     #Input
     rel_position = ctrl.Antecedent(np.arange(-800, 800, 1),'position')
@@ -61,7 +61,7 @@ def startFuzzy():
     rcs_output = ctrl.Consequent(np.arange(-2000, 2000, 1),'output') #ms
 
     #Loads Fuzzy membership Functions
-    rules_loader.load_membership(rel_position,rel_velocity,rcs_output)
+    rules_loader.load_membership(rel_position,rel_velocity,rcs_output,member_path)
 
     #Fuzzy Rules
     rulePB = ctrl.Rule(antecedent=( (rel_position['pc'] & rel_velocity['nb'])|
@@ -129,7 +129,7 @@ def runFuzzy(fuzzy, position, velocity):
     return fuzzy.output['output']
     
     
-def threadAxisControl(control, ip, axis):
+def threadAxisControl(control, ip, axis, member_path,):
     
     #Determina qual Eixo a Thread ira cuidar
     if axis == 'right':
@@ -152,7 +152,7 @@ def threadAxisControl(control, ip, axis):
     target = conn.space_center.target_vessel
     
     #Iniciando Controlador Fuzzy
-    fuzzy = startFuzzy()
+    fuzzy = startFuzzy(member_path)
     
     while True:
 
@@ -187,7 +187,7 @@ def threadAxisControl(control, ip, axis):
             reaction(vessel,axis,manu)
     _thread.exit()
 
-def asuradaRun(stop_signal, ip):
+def asuradaRun(stop_signal, ip, member_path):
     try:
         # Connect to kRPC
         conn = krpc.connect(name='Asurada AP',address=ip, rpc_port=60000, stream_port=60001)
@@ -242,9 +242,9 @@ def asuradaRun(stop_signal, ip):
             if activeThread == 0:
                 control_stop = _thread.allocate_lock()
 
-                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'up',))
-                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'forward',))
-                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'right',))
+                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'up',member_path,))
+                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'forward',member_path,))
+                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'right',member_path,))
                 activeThread = 1
 
             else:

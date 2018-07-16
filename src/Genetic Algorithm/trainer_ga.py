@@ -1,15 +1,15 @@
-
+import os,sys
 
 #Local files Import
 import scenario_eval
-
+import population_generator
 #Treinamento com Alogritmos Genéticos
 
-
-
 def run_initialization():
-	pass
+	os.mkdir("Generations/generation"+generation)
 
+	for ind in range(pop_number):
+		population_generator.gen_population("Generations/generation"+generation,ind)
 
 def run_evaluation():
 	pass

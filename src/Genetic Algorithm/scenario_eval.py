@@ -60,7 +60,7 @@ def start_scenario(knowlege_base):
 	max_dist = start_dist + start_dist/10
 
 	control = _thread.allocate_lock()
-	_thread.start_new_thread( train_fuzzy.asuradaRun,(control,ksp_ip))
+	_thread.start_new_thread( train_fuzzy.asuradaRun,(control,ksp_ip,knowlege_base))
 
 
 	#Verifica acoplagem com sucesso, colisão e afastamento 
