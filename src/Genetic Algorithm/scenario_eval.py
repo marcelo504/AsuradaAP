@@ -8,7 +8,7 @@ import _thread
 import train_fuzzy
 
 #Config
-ksp_ip = "192.168.0.101"
+#ksp_ip = "192.168.0.101"
 
 def distance_calc(current, target):
 	current_position = current.position(target.reference_frame)
@@ -29,14 +29,14 @@ def collision_detection(vessel_pos):
 		return -1
 
 
-def start_scenario(knowlege_base):
+def start_scenario(knowlege_base,ksp_ip):
 
 	conn = krpc.connect(name='Trainer v1',address=ksp_ip, rpc_port=60000, stream_port=60001)
 	vessel = conn.space_center.active_vessel
 
 	time.sleep(1)
 	print("Starting Scenario...")
-	conn.space_center.load("teste01")
+	conn.space_center.load("Training02")
 
 
 	#Parametros iniciais da Nave

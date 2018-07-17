@@ -8,7 +8,7 @@ max_speed = 50
 max_fire = 2000
 
 def gen_population(file_path,gen_number):
-	with open(file_path+'membership'+gen_number+'.csv','w',newline='') as member_file:
+	with open(file_path+'/membership'+str(gen_number)+'.csv','w',newline='') as member_file:
 		write_file = csv.writer(member_file, delimiter=',',quotechar='|', quoting=csv.QUOTE_MINIMAL)
 		write_file.writerow(['pos_name', 'tri1', 'tri2', 'tri3'])
 
@@ -68,18 +68,15 @@ def gen_population(file_path,gen_number):
 		write_file.writerow(['nc',high*-1, med*-1, low*-1])
 
 		#RCS Control
-		
+
 		write_file.writerow(['nc',0, 0, 0])
 
 		high = max_fire
 		med = max_fire
 		low = randint(int(max_fire/4),max_fire-1)
 
-		
 		write_file.writerow(['pb',low, med, high])
 		write_file.writerow(['nb',high*-1, med*-1, low*-1])
-
-
 
 		high = randint(low+1,int((high+low)/2)+1)
 		low = -1
