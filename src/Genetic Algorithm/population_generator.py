@@ -21,13 +21,13 @@ def gen_population(file_path,gen_number):
 		#Positive_Big
 		high = max_dist
 		med = max_dist
-		low = randint(int(max_dist/4),max_dist)
+		low = randint(int(max_dist/4),max_dist-1)
 		#Load Values to file
 		write_file.writerow(['pb',low, med, high])
 		write_file.writerow(['nb',high*-1, med*-1, low*-1])
 
 		#Positive_Small
-		high = randint(low+1, int((high+low)/2))
+		high = randint(low+1, int((high+low)/2)+1)
 		low = randint(0, low-1)
 		med = int((high+low)/2)
 		#Load Values
@@ -35,7 +35,7 @@ def gen_population(file_path,gen_number):
 		write_file.writerow(['ns',high*-1, med*-1, low*-1])
 
 		#Positive_Close
-		high = randint(low+1,int((high+low)/2))
+		high = randint(low+1,int((high+low)/2)+1)
 		low = -1
 		med = int(high/2)
 		#Load Values
@@ -46,13 +46,13 @@ def gen_population(file_path,gen_number):
 		#Positive_Big
 		high = max_speed
 		med = max_speed
-		low = randint(int(max_speed/4),max_speed)
+		low = randint(int(max_speed/4),max_speed-1)
 		#Load Values to file
 		write_file.writerow(['pb',low, med, high])
 		write_file.writerow(['nb',high*-1, med*-1, low*-1])
 
 		#Positive_Small
-		high = randint(low+1, int((high+low)/2))
+		high = randint(low+1, int((high+low)/2)+1)
 		low = randint(0, low-1)
 		med = int((high+low)/2)
 		#Load Values
@@ -60,7 +60,7 @@ def gen_population(file_path,gen_number):
 		write_file.writerow(['ns',high*-1, med*-1, low*-1])
 
 		#Positive_Close
-		high = randint(low+1,int((high+low)/2))
+		high = randint(low+1,int((high+low)/2)+1)
 		low = -1
 		med = int(high/2)
 		#Load Values
@@ -68,8 +68,21 @@ def gen_population(file_path,gen_number):
 		write_file.writerow(['nc',high*-1, med*-1, low*-1])
 
 		#RCS Control
-		write_file.writerow(['pb',1000, 2000, 2000])
-		write_file.writerow(['pb',0, 500, 1000])
-		write_file.writerow(['pb',0, 0, 0])
-		write_file.writerow(['pb',-1000, -500, 0])
-		write_file.writerow(['pb',-2000, -2000, -1000])
+		
+		write_file.writerow(['nc',0, 0, 0])
+
+		high = max_fire
+		med = max_fire
+		low = randint(int(max_fire/4),max_fire-1)
+
+		
+		write_file.writerow(['pb',low, med, high])
+		write_file.writerow(['nb',high*-1, med*-1, low*-1])
+
+
+
+		high = randint(low+1,int((high+low)/2)+1)
+		low = -1
+		med = int(high/2)
+		write_file.writerow(['ps',low, med, high])
+		write_file.writerow(['ns',high*-1, med*-1, low*-1])

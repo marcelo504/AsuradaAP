@@ -109,6 +109,3 @@ def start_scenario(knowlege_base):
 	
 	print("Final Score: "+str(final_score))
 	return final_score
-
-start_scenario("Teste")
-time.sleep(20)
