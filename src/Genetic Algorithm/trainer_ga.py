@@ -1,4 +1,6 @@
 import os,sys
+import time
+import random
 
 #Local files Import
 import scenario_eval
@@ -19,7 +21,10 @@ def run_initialization(pop_score):
 
 def run_evaluation(pop_score):
 	for ind in range(pop_number):
+		print("Individual "+str(ind))
 		pop_score.append(scenario_eval.start_scenario(gen_path+str(generation)+"/membership"+str(ind)+".csv",ksp_ip))
+		#pop_score.append(random.randint(1,60))
+		time.sleep(2)
 	return 0
 
 def run_recombination(mother, father):
@@ -50,8 +55,9 @@ def run_breed(pop_score):
 			child_id = child_id + 1
 
 	#New generation
-	del pop_score
-	pop_score = new_pop
+	#del pop_score
+	#pop_score = new_pop
+	pop_score.clear()
 
 def run_check_end():
 	return 0
@@ -82,8 +88,6 @@ while True:
 	generation = generation + 1
 
 	run_breed(pop_score)
-
-	break
 
 print("Solution found...")
 print("Membership"+str(max(pop_score)))

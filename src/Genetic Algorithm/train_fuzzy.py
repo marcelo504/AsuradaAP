@@ -140,6 +140,8 @@ def threadAxisControl(control, ip, axis, member_path,):
         axisN = 1
     
     name = 'Automated Docking: '+axis
+
+    time.sleep(1)
     
     conn = krpc.connect(name,address=ip, rpc_port=60000, stream_port=60001)
     vessel = conn.space_center.active_vessel
@@ -157,21 +159,25 @@ def threadAxisControl(control, ip, axis, member_path,):
     while True:
 
         if control.locked():
-            conn.close()
             break
 
         #Correção para mudança do alvo da nave para docking port
         new_target = conn.space_center.target_docking_port
         if new_target != None and docking_mode == 0:
             target = new_target
-            print("Switching to Docking mode...")
+            #print("Switching to Docking mode...")
             docking_mode = 1
 
+
+        #Correçao para caso alvo saia dos 190m de distancia
+        if distance_calc(current, target) > 190:
+            docking_mode = 0
+
         if current is None:
-            return 0
+            break
 
         elif target is None:
-            return 0 
+            break
 
         else:
             # Get positions, distances, velocities and
@@ -185,6 +191,8 @@ def threadAxisControl(control, ip, axis, member_path,):
             
             #Engage RCS Engines
             reaction(vessel,axis,manu)
+
+    conn.close()
     _thread.exit()
 
 def asuradaRun(stop_signal, ip, member_path):
@@ -220,35 +228,42 @@ def asuradaRun(stop_signal, ip, member_path):
                 time.sleep(5)
                 break
 
-            if distance_calc(current, target) < 190:
-                if mode == 1:
-                    docking_port = target.parts.with_title('Clamp-O-Tron Docking Port')[0]
-                    conn.space_center.target_docking_port = docking_port.docking_port
-                    target = conn.space_center.target_docking_port
-                    mode = 0
+            if target != None: #Docking Port target lost, swithcing to aproach mode
+
+                if distance_calc(current, target) < 190:
+                    if mode == 1:
+                        docking_port = target.parts.with_title('Clamp-O-Tron Docking Port')[0]
+                        conn.space_center.target_docking_port = docking_port.docking_port
+                        target = conn.space_center.target_docking_port
+                        mode = 0
+                elif mode == 0:
+                    mode = 1
+                    
+                #Travando controles de rotação com o Alvo
+                vessel.auto_pilot.reference_frame = vessel.orbital_reference_frame
+                tgtdir = target.direction(vessel.orbital_reference_frame)
+                vessel.auto_pilot.target_direction = [tgtdir[0]*-1, tgtdir[1]*-1, tgtdir[2]*-1]
+                if mode == 0:
+                    vessel.auto_pilot.target_roll = 180
+                else:
+                    vessel.auto_pilot.target_roll = 180
+                vessel.auto_pilot.engage()
                 
-            #Travando controles de rotação com o Alvo
-            vessel.auto_pilot.reference_frame = vessel.orbital_reference_frame
-            tgtdir = target.direction(vessel.orbital_reference_frame)
-            vessel.auto_pilot.target_direction = [tgtdir[0]*-1, tgtdir[1]*-1, tgtdir[2]*-1]
-            if mode == 0:
-                vessel.auto_pilot.target_roll = 180
-            else:
-                vessel.auto_pilot.target_roll = 180
-            vessel.auto_pilot.engage()
-            
-            
-            #Alvo Travado Iniciando Threads de Controle
-            if activeThread == 0:
-                control_stop = _thread.allocate_lock()
+                
+                #Alvo Travado Iniciando Threads de Controle
+                if activeThread == 0:
+                    control_stop = _thread.allocate_lock()
 
-                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'up',member_path,))
-                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'forward',member_path,))
-                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'right',member_path,))
-                activeThread = 1
+                    _thread.start_new_thread( threadAxisControl,(control_stop,ip,'up',member_path,))
+                    _thread.start_new_thread( threadAxisControl,(control_stop,ip,'forward',member_path,))
+                    _thread.start_new_thread( threadAxisControl,(control_stop,ip,'right',member_path,))
+                    activeThread = 1
+
+                else:
+                    time.sleep(0.5)
 
             else:
-                time.sleep(0.5)
+                mode = 0
     finally:
         pass 
 

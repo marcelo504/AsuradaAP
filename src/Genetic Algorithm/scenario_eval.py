@@ -108,4 +108,5 @@ def start_scenario(knowlege_base,ksp_ip):
 		final_score = final_score + 200 - final_dist
 	
 	print("Final Score: "+str(final_score))
+	conn.close()
 	return final_score
