@@ -10,46 +10,51 @@ import _thread
 #Local files Import
 import rules_loader
 import csv
+import vectors
 
 def distance_calc(current, target):
-    current_position = current.position(target.reference_frame)
-    displacement = np.array(current_position)
-    return la.norm(displacement)
+    if target != None:
+        current_position = current.position(target.reference_frame)
+        displacement = np.array(current_position)
+        return la.norm(displacement)
+    else:
+        return 0
 
 
 def reaction(vessel,axis,manu):
     
-    #print('RCS Firing Time: {:>6.2f} ms'.format(manu))
-    
-    if axis == 'up':
-        if manu > 0:
-            vessel.control.up = -1
-            time.sleep(abs(manu)/1000)
-            vessel.control.up = 0
-        elif manu != 0:
-            vessel.control.up = 1
-            time.sleep(abs(manu)/1000)
-            vessel.control.up = 0
-    
-    elif axis == 'forward':
-        if manu > 0:
-            vessel.control.forward = -1
-            time.sleep(abs(manu)/1000)
-            vessel.control.forward = 0
-        elif manu != 0:
-            vessel.control.forward = 1
-            time.sleep(abs(manu)/1000)
-            vessel.control.forward = 0
-    
-    elif axis == 'right':
-        if manu > 0:
-            vessel.control.right = -1
-            time.sleep(abs(manu)/1000)
-            vessel.control.right = 0
-        elif manu != 0:
-            vessel.control.right = 1
-            time.sleep(abs(manu)/1000)
-            vessel.control.right = 0
+    try:
+        if axis == 'up':
+            if manu > 0:
+                vessel.control.up = -1
+                time.sleep(abs(manu)/1000)
+                vessel.control.up = 0
+            elif manu != 0:
+                vessel.control.up = 1
+                time.sleep(abs(manu)/1000)
+                vessel.control.up = 0
+        
+        elif axis == 'forward':
+            if manu > 0:
+                vessel.control.forward = -1
+                time.sleep(abs(manu)/1000)
+                vessel.control.forward = 0
+            elif manu != 0:
+                vessel.control.forward = 1
+                time.sleep(abs(manu)/1000)
+                vessel.control.forward = 0
+        
+        elif axis == 'right':
+            if manu > 0:
+                vessel.control.right = -1
+                time.sleep(abs(manu)/1000)
+                vessel.control.right = 0
+            elif manu != 0:
+                vessel.control.right = 1
+                time.sleep(abs(manu)/1000)
+                vessel.control.right = 0
+    except Exception as e:
+        return 0
     
 
 def startFuzzy(member_path):
@@ -175,10 +180,8 @@ def threadAxisControl(control, ip, axis, member_path,):
 
         if current is None:
             break
-
         elif target is None:
             break
-
         else:
             # Get positions, distances, velocities and
             # speeds relative to the target docking port
@@ -210,6 +213,7 @@ def asuradaRun(stop_signal, ip, member_path):
 
         current = conn.space_center.active_vessel.parts.controlling.docking_port
         target = conn.space_center.target_vessel
+        rot_target = target
         
         while True:
 
@@ -220,6 +224,9 @@ def asuradaRun(stop_signal, ip, member_path):
                 current = conn.space_center.active_vessel.parts.controlling.docking_port
                 target = conn.space_center.target_vessel
 
+            #Docking Execption
+            if target == None:
+                break
 
             if stop_signal.locked():
                 #send signal to kill threads
@@ -228,7 +235,7 @@ def asuradaRun(stop_signal, ip, member_path):
                 time.sleep(5)
                 break
 
-            if target != None: #Docking Port target lost, swithcing to aproach mode
+            if target != None: #Docking Port target lost, switching to aproach mode
 
                 if distance_calc(current, target) < 190:
                     if mode == 1:
@@ -240,13 +247,15 @@ def asuradaRun(stop_signal, ip, member_path):
                     mode = 1
                     
                 #Travando controles de rotação com o Alvo
-                vessel.auto_pilot.reference_frame = vessel.orbital_reference_frame
-                tgtdir = target.direction(vessel.orbital_reference_frame)
+                vessel.auto_pilot.reference_frame = vessel.surface_reference_frame
+                tgtdir = target.direction(vessel.surface_reference_frame)
                 vessel.auto_pilot.target_direction = [tgtdir[0]*-1, tgtdir[1]*-1, tgtdir[2]*-1]
-                if mode == 0:
-                    vessel.auto_pilot.target_roll = 180
+                
+                #Tratamento para caso o target da docking port seja perdido
+                if target != None:
+                    vessel.auto_pilot.target_roll = int(vectors.calc_rot(conn,target, rot_target))
                 else:
-                    vessel.auto_pilot.target_roll = 180
+                    vessel.auto_pilot.target_roll = int(vectors.calc_rot(conn,rot_target, rot_target))
                 vessel.auto_pilot.engage()
                 
                 

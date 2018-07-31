@@ -31,7 +31,7 @@ def collision_detection(vessel_pos):
 
 def start_scenario(knowlege_base,ksp_ip):
 
-	conn = krpc.connect(name='Trainer v1',address=ksp_ip, rpc_port=60000, stream_port=60001)
+	conn = krpc.connect(name='Murph Trainer',address=ksp_ip, rpc_port=60000, stream_port=60001)
 	vessel = conn.space_center.active_vessel
 
 	time.sleep(1)

@@ -27,10 +27,6 @@ def run_evaluation(pop_score):
 		time.sleep(2)
 	return 0
 
-def run_recombination(mother, father):
-
-	pass
-
 def run_breed(pop_score):
 	#Seleciona 4 Novos Pais para a proxima geração
 	new_pop = []

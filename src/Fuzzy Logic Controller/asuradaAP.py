@@ -168,7 +168,7 @@ def threadAxisControl(axis):
     
     name = 'Automated Docking: '+axis
     
-    conn = krpc.connect(name,address='192.168.0.101', rpc_port=60000, stream_port=60001)
+    conn = krpc.connect(name,address='192.168.0.103', rpc_port=60000, stream_port=60001)
     vessel = conn.space_center.active_vessel
     current = None
     target = None
@@ -205,7 +205,7 @@ def threadAxisControl(axis):
     
 try:
     # Connect to kRPC
-    conn = krpc.connect(name='Asurada AP',address='192.168.0.101', rpc_port=60000, stream_port=60001)
+    conn = krpc.connect(name='Asurada AP',address='192.168.0.103', rpc_port=60000, stream_port=60001)
     vessel = conn.space_center.active_vessel
     current = None
     target = None
