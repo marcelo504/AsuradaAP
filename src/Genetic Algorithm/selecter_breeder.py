@@ -122,7 +122,7 @@ def breeder(file_path,generation ,father ,mother ,child_number):
 
 				selection = randint(1,2)
 				
-				if randint(1,80) == 50: #Probabilidade de ecorrer mutação
+				if randint(1,10) == 5: #Probabilidade de ecorrer mutação
 
 					mutate("rp",write_file)
 					for n in range(6):
@@ -147,7 +147,7 @@ def breeder(file_path,generation ,father ,mother ,child_number):
 
 				selection = randint(1,2)
 				
-				if randint(1,80) == 50: #Probabilidade de ecorrer mutação
+				if randint(1,10) == 5: #Probabilidade de ecorrer mutação
 
 					mutate("rv",write_file)
 					for n in range(6):
@@ -171,7 +171,7 @@ def breeder(file_path,generation ,father ,mother ,child_number):
 				#RCS Control
 
 				selection = randint(1,2)
-				if True: #Probabilidade de ecorrer mutação
+				if randint(1,10) == 5: #Probabilidade de ecorrer mutação
 
 					mutate("rcs",write_file)
 

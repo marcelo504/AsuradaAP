@@ -162,119 +162,127 @@ def threadAxisControl(control, ip, axis, member_path,):
     fuzzy = startFuzzy(member_path)
     
     while True:
+        try:
 
-        if control.locked():
+            if control.locked():
+                break
+
+            #Correção para mudança do alvo da nave para docking port
+            new_target = conn.space_center.target_docking_port
+            if new_target != None and docking_mode == 0:
+                target = new_target
+                #print("Switching to Docking mode...")
+                docking_mode = 1
+
+
+            #Correçao para caso alvo saia dos 190m de distancia
+            if distance_calc(current, target) > 190:
+                docking_mode = 0
+
+            if current is None:
+                break
+            elif target is None:
+                break
+            else:
+                # Get positions, distances, velocities and
+                # speeds relative to the target docking port
+                current_position = current.position(target.reference_frame)
+                velocity = current.part.velocity(target.reference_frame)
+
+                #Run Fuzzy
+                manu = runFuzzy(fuzzy, current_position[axisN],velocity[axisN])
+                #print("Position: {0}".format(current_position[axisN])+" Velocity: {0}".format(velocity[axisN]))
+                
+                #Engage RCS Engines
+                reaction(vessel,axis,manu)
+
+        except Exception as e:
+            print("Something went wrong...")
             break
-
-        #Correção para mudança do alvo da nave para docking port
-        new_target = conn.space_center.target_docking_port
-        if new_target != None and docking_mode == 0:
-            target = new_target
-            #print("Switching to Docking mode...")
-            docking_mode = 1
-
-
-        #Correçao para caso alvo saia dos 190m de distancia
-        if distance_calc(current, target) > 190:
-            docking_mode = 0
-
-        if current is None:
-            break
-        elif target is None:
-            break
-        else:
-            # Get positions, distances, velocities and
-            # speeds relative to the target docking port
-            current_position = current.position(target.reference_frame)
-            velocity = current.part.velocity(target.reference_frame)
-
-            #Run Fuzzy
-            manu = runFuzzy(fuzzy, current_position[axisN],velocity[axisN])
-            #print("Position: {0}".format(current_position[axisN])+" Velocity: {0}".format(velocity[axisN]))
-            
-            #Engage RCS Engines
-            reaction(vessel,axis,manu)
 
     conn.close()
     _thread.exit()
 
 def asuradaRun(stop_signal, ip, member_path):
-    try:
-        # Connect to kRPC
-        conn = krpc.connect(name='Asurada AP',address=ip, rpc_port=60000, stream_port=60001)
-        vessel = conn.space_center.active_vessel
-        current = None
-        target = None
-        manu = None
-        mode = 1 # Target mode, 1- far, 0-close
-        
-        activeThread = 0
-        control_stop= None
 
-        current = conn.space_center.active_vessel.parts.controlling.docking_port
-        target = conn.space_center.target_vessel
-        rot_target = target
-        
-        while True:
+    # Connect to kRPC
+    conn = krpc.connect(name='Asurada AP',address=ip, rpc_port=60000, stream_port=60001)
+    vessel = conn.space_center.active_vessel
+    current = None
+    target = None
+    manu = None
+    mode = 1 # Target mode, 1- far, 0-close
 
-            if mode == 0:
-                current = conn.space_center.active_vessel.parts.controlling.docking_port
-                target = conn.space_center.target_docking_port
-            else:
-                current = conn.space_center.active_vessel.parts.controlling.docking_port
-                target = conn.space_center.target_vessel
+    activeThread = 0
+    control_stop= None
 
-            #Docking Execption
-            if target == None:
-                break
+    current = conn.space_center.active_vessel.parts.controlling.docking_port
+    target = conn.space_center.target_vessel
+    rot_target = target
+    
+    while True:
 
-            if stop_signal.locked():
-                #send signal to kill threads
-                control_stop.acquire()
-                #
-                time.sleep(5)
-                break
+        if stop_signal.locked():
+            #send signal to kill threads
+            control_stop.acquire()
+            time.sleep(5)
+            break
 
-            if target != None: #Docking Port target lost, switching to aproach mode
+        #Tratamento para parar controles no Docking
+        if current.state == conn.space_center.DockingPortState.docking:
+            #send signal to kill threads
+            control_stop.acquire()
+            time.sleep(5)
+            break
 
-                if distance_calc(current, target) < 190:
-                    if mode == 1:
-                        docking_port = target.parts.with_title('Clamp-O-Tron Docking Port')[0]
-                        conn.space_center.target_docking_port = docking_port.docking_port
-                        target = conn.space_center.target_docking_port
-                        mode = 0
-                elif mode == 0:
-                    mode = 1
-                    
-                #Travando controles de rotação com o Alvo
-                vessel.auto_pilot.reference_frame = vessel.surface_reference_frame
+        if mode == 0:
+            current = conn.space_center.active_vessel.parts.controlling.docking_port
+            target = conn.space_center.target_docking_port
+        else:
+            current = conn.space_center.active_vessel.parts.controlling.docking_port
+            target = conn.space_center.target_vessel
+
+        if target != None: #Docking Port target lost, switching to aproach mode
+
+            if distance_calc(current, target) < 190:
+                if mode == 1:
+                    docking_port = target.parts.with_title('Clamp-O-Tron Docking Port')[0]
+                    conn.space_center.target_docking_port = docking_port.docking_port
+                    target = conn.space_center.target_docking_port
+                    mode = 0
+            elif mode == 0:
+                mode = 1
+                
+            #Travando controles de rotação com o Alvo
+            vessel.auto_pilot.reference_frame = vessel.surface_reference_frame
+            
+            #Tratamento para caso o target da docking port seja perdido
+            if target != None:
+                vessel.auto_pilot.target_roll = int(vectors.calc_rot(conn,target, rot_target))
                 tgtdir = target.direction(vessel.surface_reference_frame)
-                vessel.auto_pilot.target_direction = [tgtdir[0]*-1, tgtdir[1]*-1, tgtdir[2]*-1]
                 
-                #Tratamento para caso o target da docking port seja perdido
-                if target != None:
-                    vessel.auto_pilot.target_roll = int(vectors.calc_rot(conn,target, rot_target))
-                else:
-                    vessel.auto_pilot.target_roll = int(vectors.calc_rot(conn,rot_target, rot_target))
-                vessel.auto_pilot.engage()
-                
-                
-                #Alvo Travado Iniciando Threads de Controle
-                if activeThread == 0:
-                    control_stop = _thread.allocate_lock()
+            else:
+                vessel.auto_pilot.target_roll = int(vectors.calc_rot(conn,rot_target, rot_target))
+                tgtdir = rot_target.direction(vessel.surface_reference_frame)
 
-                    _thread.start_new_thread( threadAxisControl,(control_stop,ip,'up',member_path,))
-                    _thread.start_new_thread( threadAxisControl,(control_stop,ip,'forward',member_path,))
-                    _thread.start_new_thread( threadAxisControl,(control_stop,ip,'right',member_path,))
-                    activeThread = 1
+            vessel.auto_pilot.target_direction = [tgtdir[0]*-1, tgtdir[1]*-1, tgtdir[2]*-1]
+            vessel.auto_pilot.engage()
+            
+            
+            #Alvo Travado Iniciando Threads de Controle
+            if activeThread == 0:
+                control_stop = _thread.allocate_lock()
 
-                else:
-                    time.sleep(0.5)
+                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'up',member_path,))
+                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'forward',member_path,))
+                _thread.start_new_thread( threadAxisControl,(control_stop,ip,'right',member_path,))
+                activeThread = 1
 
             else:
-                mode = 0
-    finally:
-        pass 
+                time.sleep(0.5)
+
+        else:
+            mode = 0
 
     print("Stopping asuradaAP...")
     conn.close()

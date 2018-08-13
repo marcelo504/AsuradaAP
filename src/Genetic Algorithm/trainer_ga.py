@@ -19,10 +19,10 @@ def run_initialization(pop_score):
 	for ind in range(pop_number):
 		population_generator.gen_population(gen_path+str(generation),ind)
 
-def run_evaluation(pop_score):
+def run_evaluation(pop_score, generation_number):
 	for ind in range(pop_number):
 		print("Individual "+str(ind))
-		pop_score.append(scenario_eval.start_scenario(gen_path+str(generation)+"/membership"+str(ind)+".csv",ksp_ip))
+		pop_score.append(scenario_eval.start_scenario(gen_path+str(generation)+"/membership"+str(ind)+".csv",ksp_ip,generation_number,ind))
 		#pop_score.append(random.randint(1,60))
 		time.sleep(2)
 	return 0
@@ -67,17 +67,22 @@ childs_number = 3
 
 #Popular geração 0
 pop_score = []
-run_initialization(pop_score)
+
+if len(sys.argv) > 1:
+	gen_input = sys.argv[1]
+	generation = int(gen_input)
+else:
+	run_initialization(pop_score)
 
 while True:
 	print("Starting generation: "+str(generation))
 
-	run_evaluation(pop_score)
+	run_evaluation(pop_score, generation)
 	
 	print("Results:")
 	print(pop_score)
 	print(max(pop_score))
-	if max(pop_score) > 1000:
+	if max(pop_score) > 1400:
 		break
 
 	#Preparando nova população
