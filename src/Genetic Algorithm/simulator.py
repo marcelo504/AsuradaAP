@@ -3,7 +3,8 @@
 #Local files Import
 import scenario_eval
 
-ksp_ip = "192.168.0.104"
+#ksp_ip = "192.168.0.104"
+ksp_ip = "192.168.43.55"
 gen_path = "Generations/Train01/generation"
 generation = 45
 ind = 1
