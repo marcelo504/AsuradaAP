@@ -31,8 +31,9 @@ def button_action(button,control,ksp_ip):
 	if button.text.content == "Engage":
 		print("Engaging")
 		button.text.content = "Abort"
+		if control.locked == True:
+			control.release()
 
-		control = _thread.allocate_lock()
 		_thread.start_new_thread( train_fuzzy.asuradaRun,(control,ksp_ip,"first_solution.csv"))
 
 	elif button.text.content == "Abort":
@@ -54,7 +55,7 @@ def main_run(ksp_ip):
 	current = conn.space_center.active_vessel.parts.controlling.docking_port
 	target = conn.space_center.target_vessel
 	success = 0
-	control = None
+	control = _thread.allocate_lock()
 
 	#Start interface
 	canvas = conn.ui.stock_canvas
@@ -79,17 +80,33 @@ def main_run(ksp_ip):
 	action_button.rect_transform.position = (0, -20)
 	action_button.text.content = "Disabled"
 
-
 	running = False;
 
 	while True:
+		vessel = conn.space_center.active_vessel
+		target = conn.space_center.target_vessel
+		current = conn.space_center.active_vessel.parts.controlling.docking_port
 
 		#Check Button
 		if action_button.clicked:
+			running = True;
+			vessel.control.rcs = True;
 			button_action(action_button,control,ksp_ip)
 
 		#Update Interface
-		if target == None: #Not Ready
+		if running == True:
+			if action_button.clicked:
+				button_action(action_button,control,ksp_ip)
+				running = False;
+
+			if current.state != conn.space_center.DockingPortState.docking:
+				running = False;
+
+		elif current == None:
+			message.content = "Invalid Control"
+			action_button.text.content = "Disabled"
+
+		elif target == None: #Not Ready
 			message.content = "No target selected"
 			action_button.text.content = "Disabled"
 
@@ -108,3 +125,4 @@ def main_run(ksp_ip):
 
 
 main_run("192.168.0.101")
+#main_run("192.168.43.55")
