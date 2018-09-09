@@ -65,19 +65,37 @@ def main_run(ksp_ip):
 	# Add a panel to contain the UI elements
 	panel = canvas.add_panel()
 
-	# Position the panel on the left of the screen
+	# Posicionamento da Interface no Jogo 
 	rect = panel.rect_transform
-	rect.size = (200, 100)
+	rect.size = (200, 200)
 	rect.position = (110-(screen_size[0]/2), 0)
+	rect.color = (1,1,1)
 
-	#Interface
-	message = panel.add_text("Starting...")
-	message.rect_transform.position = (0, 20)
+	#Itens da Interface
+	title = panel.add_text("Asurada")
+	title.rect_transform.position = (0, 80)
+	title.size = 26
+	title.style = title.style.bold
+	title.alignment = title.alignment.middle_center
+	title.color = (0,1,0)
+	title.font = "OCR-A BT"
+	#print(title.available_fonts)
+
+	desc = panel.add_text("Docking Autopilot")
+	desc.rect_transform.position = (0, 48)
+	desc.alignment = desc.alignment.middle_center
+	desc.size =18
+	desc.color = (0,.7,0)
+
+	message = panel.add_text("Initializing...")
+	message.rect_transform.position = (0, -25)
+	message.alignment = message.alignment.middle_center
 	message.color = (1, 1, 1)
-	message.size = 18
+	message.size = 16
 
 	action_button = panel.add_button("Engage")
-	action_button.rect_transform.position = (0, -20)
+	action_button.rect_transform.position = (0, -60)
+	action_button.rect_transform.size = (180,40)
 	action_button.text.content = "Disabled"
 
 	running = False;
@@ -103,7 +121,7 @@ def main_run(ksp_ip):
 				running = False;
 
 		elif current == None:
-			message.content = "Invalid Control"
+			message.content = "Select Docking Port"
 			action_button.text.content = "Disabled"
 
 		elif target == None: #Not Ready
@@ -124,5 +142,5 @@ def main_run(ksp_ip):
 		time.sleep(0.1)
 
 
-main_run("192.168.0.101")
+main_run("192.168.0.103")
 #main_run("192.168.43.55")
