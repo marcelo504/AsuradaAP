@@ -27,24 +27,30 @@ def collision_detection(vessel_pos):
 		return -1
 
 
-def button_action(button,control,ksp_ip):
+def button_action(vessel,button,message,control,ksp_ip):
 	if button.text.content == "Engage":
 		print("Engaging")
+		running = True
+		vessel.control.rcs = True;
+		message.content = "Docking in progress..."
 		button.text.content = "Abort"
-		if control.locked == True:
-			control.release()
 
 		_thread.start_new_thread( train_fuzzy.asuradaRun,(control,ksp_ip,"first_solution.csv"))
 
 	elif button.text.content == "Abort":
 		print("Aborting")
-		button.text.content = "Engage"
+		message.content = "Aborting..."
+		button.text.content = "Disabled"
 		#Stop AsuradaAP
 		control.acquire()
 		time.sleep(5)
+		control.release()
+		running = False
+	else:
+		running = False
 
 	button.clicked = False
-
+	return running
 
 def main_run(ksp_ip):
 	conn = krpc.connect(name='Asurada Interface',address=ksp_ip, rpc_port=60000, stream_port=60001)
@@ -87,6 +93,11 @@ def main_run(ksp_ip):
 	desc.size =18
 	desc.color = (0,.7,0)
 
+	status = panel.add_text("Status:")
+	status.rect_transform.position = (0, -10)
+	status.size=16
+	status.color = (0,.7,0)
+
 	message = panel.add_text("Initializing...")
 	message.rect_transform.position = (0, -25)
 	message.alignment = message.alignment.middle_center
@@ -98,6 +109,7 @@ def main_run(ksp_ip):
 	action_button.rect_transform.size = (180,40)
 	action_button.text.content = "Disabled"
 
+
 	running = False;
 
 	while True:
@@ -107,19 +119,15 @@ def main_run(ksp_ip):
 
 		#Check Button
 		if action_button.clicked:
-			running = True;
-			vessel.control.rcs = True;
-			button_action(action_button,control,ksp_ip)
+			running = button_action(vessel,action_button,message,control,ksp_ip)
+
+		#Check if ships docked if running
+		if running == True:
+			if current.state == conn.space_center.DockingPortState.docking:
+				running = False;
+			pass
 
 		#Update Interface
-		if running == True:
-			if action_button.clicked:
-				button_action(action_button,control,ksp_ip)
-				running = False;
-
-			if current.state != conn.space_center.DockingPortState.docking:
-				running = False;
-
 		elif current == None:
 			message.content = "Select Docking Port"
 			action_button.text.content = "Disabled"
