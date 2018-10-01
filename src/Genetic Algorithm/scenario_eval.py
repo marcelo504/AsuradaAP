@@ -109,7 +109,10 @@ def start_scenario(knowlege_base,ksp_ip,gen_number,individual_name):
 				target = new_target
 
 			curr_dist = distance_calc(current, target)
-			curr_rcs = resources.amount("MonoPropellant")
+			try:
+				curr_rcs = resources.amount("MonoPropellant")
+			except Exception as e:
+				print("Failed to get RCS readings, probably ship docked?...")
 
 			#limite uso de RCS
 			if start_rcs - 200 > curr_rcs:
