@@ -31,7 +31,7 @@ def collision_detection(vessel_pos):
 		return -1
 
 
-def button_action(vessel,button,message,control,ksp_ip):
+def button_action(vessel,button, manual_mode, message,control,ksp_ip):
 	if button.text.content == "Engage":
 		print("Engaging")
 		running = True
@@ -39,9 +39,9 @@ def button_action(vessel,button,message,control,ksp_ip):
 		message.content = "Docking in progress..."
 		button.text.content = "Abort"
 
-
-
-		_thread.start_new_thread( train_fuzzy.asuradaRun,(control,ksp_ip,gen_path+str(generation)+"/membership"+str(ind)+".csv"))
+		#Manual Mode, Disable Asurada actvation
+		if manual_mode == False:
+			_thread.start_new_thread( train_fuzzy.asuradaRun,(control,ksp_ip,gen_path+str(generation)+"/membership"+str(ind)+".csv"))
 
 	elif button.text.content == "Abort":
 		print("Aborting")
@@ -67,6 +67,17 @@ def adv_action(button, state):
 	else:
 		return True
 
+def manual_switch(button, state):
+	print("Clicked2")
+	time.sleep(0.5)
+	button.clicked = False;
+	if state == True:
+		button.text.color = (0,0,0)
+		return False
+	else:
+		button.text.color = (0,.8,0)
+		return True
+
 
 def main_run(ksp_ip):
 
@@ -88,6 +99,8 @@ def main_run(ksp_ip):
 	#RCS Parameters
 	start_rcs = 0
 	actual_rcs = 0
+	dist_stats = 0
+	rcs_stats = 0
 
 	#Start interface
 	canvas = conn.ui.stock_canvas
@@ -160,7 +173,8 @@ def main_run(ksp_ip):
 
 	running = False;
 	advanced_mode = False;
-	mode = False
+	mode = False;
+	manual_mode = False;
 
 	while True:
 		#try:
@@ -172,32 +186,38 @@ def main_run(ksp_ip):
 
 		#Check Button
 		if action_button.clicked:
-			running = button_action(vessel,action_button,message,control,ksp_ip)
+
+			running = button_action(vessel,action_button,manual_mode, message,control,ksp_ip)
+
 			#Button activated docking
 			if action_button.text.content == "Abort":
 				#Get readings
 				start_time = datetime.datetime.now()
 				start_rcs = conn.space_center.active_vessel.resources.amount("MonoPropellant")
 
+		#Check Adv Mode Button
+		if advanced_mode:
+			if manual_button.clicked:
+				manual_mode = manual_switch(manual_button, manual_mode)
 
 		#Check Advanced Mode Button
 		if adv_button.clicked:
 			advanced_mode = adv_action(adv_button, advanced_mode)
 
-		
 		#Check Interface Mode
 		if advanced_mode == True and mode == False: #Advanced Mode
 			mode = advanced_mode
 
-			rect.size = (200, 300)
+			rect.size = (200, 400)
 			print("Adv Mode")
 
-			start_offset = 135
+			start_offset = 185
 			title.rect_transform.position = (0, start_offset)
 			title2.rect_transform.position = (0, start_offset - 25)
 			desc.rect_transform.position = (0, start_offset - 55)
 
 			#Docking information
+			start_offset = start_offset - 10
 
 			info_pos = start_offset - 95
 			time_title = panel.add_text("Docking time:")
@@ -216,14 +236,34 @@ def main_run(ksp_ip):
 			rcs_title.size = 16
 			rcs_title.color = (1, 1, 1)
 
-			rcs_reads = panel.add_text("0.00")
+			rcs_reads = panel.add_text("%.2f" % rcs_stats)
 			rcs_reads.rect_transform.position = (0, info_pos - 60)
 			rcs_reads.size = 16
 			rcs_reads.alignment = title.alignment.middle_center
 			rcs_reads.color = (1, 1, 1)
 
+			dist_title = panel.add_text("Dist from target:")
+			dist_title.rect_transform.position = (0, info_pos - 90)
+			dist_title.size = 16
+			dist_title.color = (1, 1, 1)
 
-			status_pos = start_offset - 185
+			dist_reads = panel.add_text("%.2f" % dist_stats)
+			dist_reads.rect_transform.position = (0, info_pos - 105)
+			dist_reads.size = 16
+			dist_reads.alignment = title.alignment.middle_center
+			dist_reads.color = (1, 1, 1)
+
+			#Button Manual Mode
+			manual_button = panel.add_button("Manual Mode")
+			manual_button.rect_transform.position = (0, info_pos - 135)
+			manual_button.rect_transform.size = (180,20)
+			manual_button.text.content = "Manual Mode"
+			if manual_mode == True:
+				manual_button.text.color = (0,.8,0)
+			manual_button.text.size = 12
+
+
+			status_pos = start_offset - 275
 			status.rect_transform.position = (0, status_pos)
 			message.rect_transform.position = (0, status_pos - 15)
 			action_button.rect_transform.position = (0, status_pos - 50)
@@ -237,10 +277,14 @@ def main_run(ksp_ip):
 
 			rect.size = (200, 250)
 
+			#Remove all Adv mode objects
 			time_title.remove()
 			time_ela.remove()
 			rcs_title.remove()
 			rcs_reads.remove()
+			dist_title.remove()
+			dist_reads.remove()
+			manual_button.remove()
 
 			start_offset = 105
 			title.rect_transform.position = (0, start_offset)
@@ -260,9 +304,16 @@ def main_run(ksp_ip):
 			#Docking is Running update values to advanced mode
 			actual_time = datetime.datetime.now()
 			actual_rcs = conn.space_center.active_vessel.resources.amount("MonoPropellant")
+			rcs_stats = start_rcs - actual_rcs
+			if conn.space_center.target_docking_port != None:
+				dist_stats = distance_calc(current,conn.space_center.target_docking_port)
+			else:
+				dist_stats = distance_calc(current,conn.space_center.target_vessel)
 			if advanced_mode:
+
 				time_ela.content = str(actual_time - start_time)
-				rcs_reads.content = str(start_rcs - actual_rcs)
+				rcs_reads.content = "%.2f" % rcs_stats
+				dist_reads.content = "%.2f" % dist_stats
 
 
 			pass
