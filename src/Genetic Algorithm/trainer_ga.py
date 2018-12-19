@@ -7,14 +7,14 @@ import scenario_eval
 import population_generator
 import selecter_breeder
 
-ksp_ip = "192.168.0.103"
+ksp_ip = "192.168.0.104"
 
 #Treinamento com Alogritmos Genéticos
 
-gen_path = "Generations/generation"
+gen_path = "Generations2/generation"
 
 def run_initialization(pop_score):
-	os.mkdir("Generations/generation"+str(generation))
+	os.mkdir(gen_path+str(generation))
 
 	for ind in range(pop_number):
 		population_generator.gen_population(gen_path+str(generation),ind)
@@ -32,7 +32,7 @@ def run_breed(pop_score):
 	new_pop = []
 	child_id = 0
 
-	os.mkdir("Generations/generation"+str(generation))
+	os.mkdir(gen_path+str(generation))
 
 	for child in range(parents_number):
 		father = selecter_breeder.selecter(pop_score)
@@ -45,10 +45,19 @@ def run_breed(pop_score):
 		#Membros da populacao foram escolhidos logo nao serao escolhidos de novo
 		pop_score[mother] = 0
 
-		#Breed
-		for n in range(childs_number):
-			selecter_breeder.breeder(gen_path,generation,father,mother,child_id)
-			child_id = child_id + 1
+		#Breed v1
+		# for n in range(childs_number):
+		# 	selecter_breeder.breeder(gen_path,generation,father,mother,child_id)
+		# 	child_id = child_id + 1
+
+		#Breed v2
+		selecter_breeder.breeder(gen_path,generation,father,father,child_id) #Child identical to Father
+		child_id = child_id + 1
+		selecter_breeder.breeder(gen_path,generation,mother,mother,child_id) #Child identical to mother
+		child_id = child_id + 1
+		selecter_breeder.breeder(gen_path,generation,father,mother,child_id) #New Child
+		child_id = child_id + 1
+
 
 	#New generation
 	#del pop_score

@@ -206,7 +206,7 @@ def threadAxisControl(control, ip, axis, member_path,):
 def asuradaRun(stop_signal, ip, member_path):
 
     # Connect to kRPC
-    conn = krpc.connect(name='Asurada AP',address=ip, rpc_port=60000, stream_port=60001)
+    conn = krpc.connect(name='Asurada AutoPilot',address=ip, rpc_port=60000, stream_port=60001)
     vessel = conn.space_center.active_vessel
     current = None
     target = None
@@ -222,18 +222,19 @@ def asuradaRun(stop_signal, ip, member_path):
     
     while True:
 
-        if stop_signal.locked():
+        if stop_signal.locked() == True:
             #send signal to kill threads
             control_stop.acquire()
             time.sleep(5)
             break
 
         #Tratamento para parar controles no Docking
-        if current.state == conn.space_center.DockingPortState.docking:
-            #send signal to kill threads
-            control_stop.acquire()
-            time.sleep(5)
-            break
+        if current != None:
+            if current.state == conn.space_center.DockingPortState.docking:
+                #send signal to kill threads
+                control_stop.acquire()
+                time.sleep(5)
+                break
 
         if mode == 0:
             current = conn.space_center.active_vessel.parts.controlling.docking_port

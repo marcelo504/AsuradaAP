@@ -60,8 +60,8 @@ def start_scenario(knowlege_base,ksp_ip,gen_number,individual_name):
 
 	time.sleep(1)
 	print("Starting Scenario...")
-	conn.space_center.load("002")
-	#conn.space_center.load("Training02")
+	#conn.space_center.load("002")
+	conn.space_center.load("Training02")
 
 	draw_interface(conn, gen_number, individual_name)
 
@@ -101,7 +101,7 @@ def start_scenario(knowlege_base,ksp_ip,gen_number,individual_name):
 			break
 
 		#Tratamento para pré-Docking
-		if current.state == conn.space_center.DockingPortState.docking:
+		if current.state != conn.space_center.DockingPortState.docking:
 
 			#Correção para mudança do alvo da nave para docking port
 			new_target = conn.space_center.target_docking_port
@@ -109,7 +109,10 @@ def start_scenario(knowlege_base,ksp_ip,gen_number,individual_name):
 				target = new_target
 
 			curr_dist = distance_calc(current, target)
-			curr_rcs = resources.amount("MonoPropellant")
+			try:
+				curr_rcs = resources.amount("MonoPropellant")
+			except Exception as e:
+				print("Failed to get RCS readings, probably ship docked?...")
 
 			#limite uso de RCS
 			if start_rcs - 200 > curr_rcs:

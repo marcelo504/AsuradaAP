@@ -105,6 +105,8 @@ def put_csv(csv_file, object):
 
 
 def breeder(file_path,generation ,father ,mother ,child_number):
+
+	max_rand = 20 #Valor maximo a ser gerado maior => menos provavel
 	
 	with open(file_path+str(generation-1)+"/membership"+str(father)+".csv") as father_file:
 		with open(file_path+str(generation-1)+"/membership"+str(mother)+".csv") as mother_file:
@@ -122,7 +124,7 @@ def breeder(file_path,generation ,father ,mother ,child_number):
 
 				selection = randint(1,2)
 				
-				if randint(1,10) == 5: #Probabilidade de ecorrer mutação
+				if randint(1,max_rand) == 5: #Probabilidade de ecorrer mutação
 
 					mutate("rp",write_file)
 					for n in range(6):
@@ -147,7 +149,7 @@ def breeder(file_path,generation ,father ,mother ,child_number):
 
 				selection = randint(1,2)
 				
-				if randint(1,10) == 5: #Probabilidade de ecorrer mutação
+				if randint(1,max_rand) == 5: #Probabilidade de ecorrer mutação
 
 					mutate("rv",write_file)
 					for n in range(6):
@@ -171,7 +173,7 @@ def breeder(file_path,generation ,father ,mother ,child_number):
 				#RCS Control
 
 				selection = randint(1,2)
-				if randint(1,10) == 5: #Probabilidade de ecorrer mutação
+				if randint(1,max_rand) == 5: #Probabilidade de ecorrer mutação
 
 					mutate("rcs",write_file)
 
